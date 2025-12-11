@@ -1,14 +1,16 @@
-# enigma/key_utils.py
-
+import os
 import json
 import random
 from .config import ALPHABET, ROTORS, REFLECTORS
 
 
+# ==============================
+#   GÉNÉRATION DE LA CLÉ
+# ==============================
+
 def generate_random_plugboard(max_pairs: int = 8) -> str:
     """
     Génère un plugboard aléatoire sous forme de paires (ex: 'AF TV KO').
-    max_pairs = nombre max de paires.
     """
     letters = list(ALPHABET)
     random.shuffle(letters)
@@ -26,12 +28,7 @@ def generate_random_plugboard(max_pairs: int = 8) -> str:
 
 def generate_random_key() -> dict:
     """
-    Génère une clé Enigma complète de manière aléatoire :
-      - 3 rotors parmi ceux définis dans ROTORS
-      - 3 positions initiales A-Z
-      - 3 ring settings entre 1 et 26
-      - 1 réflecteur
-      - 0 à N paires de plugboard
+    Génère une clé Enigma complète de manière aléatoire.
     """
     rotor_names = random.sample(list(ROTORS.keys()), 3)
     rotor_positions = [random.choice(ALPHABET) for _ in range(3)]
@@ -48,17 +45,39 @@ def generate_random_key() -> dict:
     }
 
 
-def save_key_to_file(key_dict: dict, filepath: str = "cle_enigma.json"):
+# ==============================
+#   SAUVEGARDE POUR CHIFFREMENT
+# ==============================
+
+def save_key_to_file(key_dict: dict, filename: str = "cle_enigma.json"):
     """
-    Sauvegarde la clé dans un fichier JSON.
+    Sauvegarde une clé Enigma dans le dossier Key/.
     """
+    key_dir = "Key"  # le dossier existe déjà chez toi
+    os.makedirs(key_dir, exist_ok=True)  # ne casse rien si déjà présent
+
+    filepath = os.path.join(key_dir, filename)
+
     with open(filepath, "w", encoding="utf-8") as f:
         json.dump(key_dict, f, indent=4)
 
+    print(f"\nClé enregistrée dans : {filepath}")
 
-def load_key_from_file(filepath: str = "cle_enigma.json") -> dict:
+
+# ==============================
+#   CHARGEMENT POUR DÉCHIFFREMENT
+# ==============================
+
+def load_key_from_file(filename: str = "cle_enigma.json") -> dict:
     """
-    Charge une clé depuis un fichier JSON et la retourne sous forme de dict.
+    Charge une clé depuis le dossier Key/.
+    L'utilisateur ne donne que le nom du fichier.
     """
+    key_dir = "Key"
+    filepath = os.path.join(key_dir, filename)
+
+    if not os.path.exists(filepath):
+        raise FileNotFoundError(f"Le fichier '{filepath}' est introuvable dans Key/.")
+
     with open(filepath, "r", encoding="utf-8") as f:
         return json.load(f)
